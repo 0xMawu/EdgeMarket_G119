@@ -151,9 +151,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setAuthState('unauthenticated');
   }, [setJwt]);
 
+  // re-fetches the current user from the server - call this after payment
+  const refreshUser = useCallback(async () => {
+    const jwt = getJwt();
+    if (!jwt) return;
+    try {
+      const user = await fetchCurrentUser(jwt);
+      setCurrentUser(user);
+    } catch {
+      // if it fails just leave the current state as-is
+    }
+  }, [getJwt]);
+
   return (
     <AuthContext.Provider
-      value={{ authState, currentUser, error, getJwt, signup, login, verifyEmail, resendCode, logout }}
+      value={{ authState, currentUser, error, getJwt, signup, login, verifyEmail, resendCode, logout, refreshUser }}
     >
       {children}
     </AuthContext.Provider>

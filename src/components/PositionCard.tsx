@@ -25,7 +25,7 @@ export function PositionCard({ position, targetAddress }: Props) {
   const profitable = position.pnl >= 0;
   const pnlColor = profitable ? colors.green : colors.red;
 
-  const { currentUser, getJwt } = useAuth();
+  const { currentUser, getJwt, refreshUser } = useAuth();
 
   const [modalVisible, setModalVisible] = useState(false);
   const [paywallVisible, setPaywallVisible] = useState(false);
@@ -201,6 +201,7 @@ export function PositionCard({ position, targetAddress }: Props) {
         visible={paywallVisible}
         onClose={() => setPaywallVisible(false)}
         jwt={getJwt()}
+        onPaymentComplete={refreshUser}
       />
     </View>
   );

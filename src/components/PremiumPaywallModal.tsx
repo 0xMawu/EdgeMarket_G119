@@ -10,9 +10,10 @@ interface Props {
   visible: boolean;
   onClose: () => void;
   jwt: string | null;
+  onPaymentComplete?: () => Promise<void>;
 }
 
-export function PremiumPaywallModal({ visible, onClose, jwt }: Props) {
+export function PremiumPaywallModal({ visible, onClose, jwt, onPaymentComplete }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -32,7 +33,17 @@ export function PremiumPaywallModal({ visible, onClose, jwt }: Props) {
       }
       const { url } = await res.json() as { url: string };
       if (!url) { setError('Unable to start checkout. Please try again.'); return; }
+
+      // open Paystack payment page
       await WebBrowser.openAuthSessionAsync(url, 'edgemarket://subscription/success');
+
+      // after the browser closes, wait a moment for the webhook to process
+      // then refresh the user so isPremium updates immediately
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      if (onPaymentComplete) {
+        await onPaymentComplete();
+      }
+      onClose();
     } catch {
       setError('Unable to start checkout. Please try again.');
     } finally {

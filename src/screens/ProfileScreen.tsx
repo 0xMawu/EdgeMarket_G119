@@ -148,7 +148,7 @@ export function ProfileScreen() {
   } = useWalletAuth();
   const { pushToken, permissionStatus, requestPermission } = usePushNotifications();
   const { samples, addSample } = usePortfolioHistory(walletAddress);
-  const { getJwt: getEmailJwt, currentUser, logout: emailLogout } = useAuth();
+  const { getJwt: getEmailJwt, currentUser, logout: emailLogout, refreshUser } = useAuth();
   const isPremium = currentUser?.isPremium ?? false;
   const { accounts } = usePolymarket(isPremium);
 
@@ -730,6 +730,7 @@ export function ProfileScreen() {
         visible={paywallVisible}
         onClose={() => setPaywallVisible(false)}
         jwt={getEmailJwt()}
+        onPaymentComplete={refreshUser}
       />
     </LinearGradient>
   );
