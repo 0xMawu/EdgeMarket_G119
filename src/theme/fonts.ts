@@ -5,7 +5,7 @@ import {
   PlusJakartaSans_700Bold,
 } from '@expo-google-fonts/plus-jakarta-sans';
 
-// Exported for use in useFonts() inside App.tsx
+// pass this to useFonts() in App.tsx
 export const fontAssets = {
   PlusJakartaSans_400Regular,
   PlusJakartaSans_500Medium,
@@ -13,6 +13,7 @@ export const fontAssets = {
   PlusJakartaSans_700Bold,
 };
 
+// use these font family names in StyleSheet
 export const fonts = {
   regular:  'PlusJakartaSans_400Regular',
   medium:   'PlusJakartaSans_500Medium',

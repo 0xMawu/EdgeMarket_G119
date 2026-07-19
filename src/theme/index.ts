@@ -1,4 +1,4 @@
-// Design tokens — single import source for all screens
+// barrel export - import everything from here instead of individual theme files
 export { colors, darkColors, lightColors } from './colors';
 export type { ThemeColors, Colors } from './colors';
 export { fonts, fontAssets } from './fonts';

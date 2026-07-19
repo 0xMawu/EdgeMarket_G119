@@ -1,5 +1,6 @@
 import { StyleSheet } from 'react-native';
 
+// spacing scale (4pt grid)
 export const spacing = {
   xs:   4,
   sm:   8,
@@ -10,6 +11,7 @@ export const spacing = {
   xxxl: 48,
 } as const;
 
+// border radius scale
 export const radii = {
   xs:   4,
   sm:   8,
@@ -20,6 +22,7 @@ export const radii = {
   full: 9999,
 } as const;
 
+// border widths
 export const borderWidths = {
   thin:    StyleSheet.hairlineWidth,
   default: 1,

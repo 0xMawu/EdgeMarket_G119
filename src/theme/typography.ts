@@ -1,5 +1,6 @@
 import { fonts } from './fonts';
 
+// text style presets used throughout the app
 export const typography = {
   displayLarge: {
     fontFamily: fonts.bold,

@@ -1,9 +1,5 @@
-// theme/ThemeContext.tsx
-//
-// Wrap your app root in <ThemeProvider> once (e.g. in App.tsx), then call
-// `useTheme()` from any screen/component to read the active palette and
-// toggle between dark/light mode. The choice is persisted to AsyncStorage
-// so it survives app restarts.
+// provides dark/light theme to the whole app
+// wrap the app root in <ThemeProvider> and call useTheme() in any screen
 
 import React, {
   createContext,
@@ -23,7 +19,7 @@ interface ThemeContextValue {
   isDark: boolean;
   toggleTheme: () => void;
   setMode: (mode: ThemeMode) => void;
-  ready: boolean; // true once the persisted preference has loaded
+  ready: boolean;
 }
 
 const STORAGE_KEY = '@theme-mode';
@@ -31,11 +27,10 @@ const STORAGE_KEY = '@theme-mode';
 const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  // Default mode is 'dark' (the app's original look) until AsyncStorage
-  // resolves, to avoid a flash of the wrong palette on cold start.
   const [mode, setModeState] = useState<ThemeMode>('dark');
   const [ready, setReady] = useState(false);
 
+  // load saved theme preference on startup
   useEffect(() => {
     let cancelled = false;
     AsyncStorage.getItem(STORAGE_KEY)
@@ -45,9 +40,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
           setModeState(saved);
         }
       })
-      .catch(() => {
-        // No persisted preference / storage unavailable — keep default.
-      })
+      .catch(() => {})
       .finally(() => {
         if (!cancelled) setReady(true);
       });
@@ -58,9 +51,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   const setMode = (next: ThemeMode) => {
     setModeState(next);
-    AsyncStorage.setItem(STORAGE_KEY, next).catch(() => {
-      // Non-fatal: theme just won't persist across restarts.
-    });
+    AsyncStorage.setItem(STORAGE_KEY, next).catch(() => {});
   };
 
   const toggleTheme = () => setMode(mode === 'dark' ? 'light' : 'dark');
