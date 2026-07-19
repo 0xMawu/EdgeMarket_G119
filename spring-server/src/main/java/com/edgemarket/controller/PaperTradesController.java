@@ -42,7 +42,7 @@ public class PaperTradesController {
     private static final Logger log = LoggerFactory.getLogger(PaperTradesController.class);
 
     private static final String POSITIONS_URL =
-            "https://data-api.polymarket.com/positions?user=%s&limit=100&sortBy=CURRENTVALUE&sortDirection=DESC";
+            "https://data-api.polymarket.com/positions?user=%s&limit=100&sortBy=CURRENT&sortDirection=DESC";
 
     private static final String CLOSED_POSITIONS_URL =
             "https://data-api.polymarket.com/closed-positions?user=%s&limit=500";
