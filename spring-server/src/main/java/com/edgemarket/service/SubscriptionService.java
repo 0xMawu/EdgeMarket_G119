@@ -142,6 +142,44 @@ public class SubscriptionService {
         }
     }
 
+    // ── Direct verification (fallback if webhook is slow) ─────────────────────
+
+    /**
+     * Verifies a Paystack transaction by reference and upgrades the user if paid.
+     * Called by the mobile app after the payment page closes.
+     * This is a fallback in case the webhook is delayed.
+     */
+    public boolean verifyTransactionAndUpgrade(UUID userId, String reference) {
+        if (secretKey == null || secretKey.isBlank()) return false;
+        try {
+            HttpRequest req = HttpRequest.newBuilder()
+                    .uri(URI.create(PAYSTACK_BASE + "/transaction/verify/" + reference))
+                    .header("Authorization", "Bearer " + secretKey)
+                    .GET()
+                    .build();
+
+            HttpResponse<String> resp = HTTP.send(req, HttpResponse.BodyHandlers.ofString());
+            JsonNode json = MAPPER.readTree(resp.body());
+
+            if (!json.path("status").asBoolean(false)) return false;
+
+            String status = json.path("data").path("status").asText("");
+            if (!"success".equals(status)) return false;
+
+            // payment confirmed - upgrade the user
+            jdbcTemplate.update(
+                    "UPDATE users SET subscription_tier = 'premium' WHERE id = ?::uuid",
+                    userId.toString());
+
+            log.info("[Subscription] Direct verify upgrade: userId={} reference={}", userId, reference);
+            return true;
+
+        } catch (IOException | InterruptedException e) {
+            log.warn("[Subscription] verifyTransaction failed for userId={}: {}", userId, e.getMessage());
+            return false;
+        }
+    }
+
     // ── Cancellation ───────────────────────────────────────────────────────────
 
     /**

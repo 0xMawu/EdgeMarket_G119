@@ -38,7 +38,8 @@ public class AuthFilter extends OncePerRequestFilter {
             "POST /api/paper-trades",
             "GET /api/auth/me",
             "POST /api/subscription/checkout",
-            "POST /api/subscription/cancel"
+            "POST /api/subscription/cancel",
+            "POST /api/subscription/verify"
     );
 
     private final String jwtSecret;

@@ -57,6 +57,30 @@ public class SubscriptionController {
     }
 
     /**
+     * POST /api/subscription/verify?reference=xxx
+     * Called by the app after the payment page closes.
+     * Verifies the transaction with Paystack directly and upgrades if paid.
+     */
+    @PostMapping("/verify")
+    public ResponseEntity<Map<String, Object>> verifyTransaction(
+            HttpServletRequest request,
+            @org.springframework.web.bind.annotation.RequestParam String reference) {
+        String subject = (String) request.getAttribute("authenticatedAddress");
+        if (subject == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("error", "Unauthorized"));
+        }
+        try {
+            UUID userId = UUID.fromString(subject);
+            boolean upgraded = subscriptionService.verifyTransactionAndUpgrade(userId, reference);
+            return ResponseEntity.ok(Map.of("upgraded", upgraded));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("error", "Unauthorized"));
+        }
+    }
+
+    /**
      * POST /api/subscription/cancel
      * Protected — requires a valid JWT. Cancels the user's Paystack subscription
      * and immediately downgrades their account to basic.
