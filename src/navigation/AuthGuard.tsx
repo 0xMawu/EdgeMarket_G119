@@ -5,12 +5,7 @@ import { RootNavigator } from './RootNavigator';
 import { AuthNavigator } from './AuthNavigator';
 import { colors } from '../theme/colors';
 
-/**
- * AuthGuard — top-level navigation switch.
- * - 'loading'        → full-screen spinner while rehydrating session
- * - 'authenticated'  → main app (RootNavigator)
- * - 'unauthenticated'→ auth screens (AuthNavigator)
- */
+// shows a spinner while loading, then routes to the right navigator
 export function AuthGuard() {
   const { authState } = useAuth();
 

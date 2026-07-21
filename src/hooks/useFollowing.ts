@@ -1,27 +1,21 @@
-/**
- * useFollowing — module-level state with AsyncStorage persistence.
- *
- * Follow lists are scoped per user account. The storage key is namespaced
- * by the logged-in user's ID (email-auth UUID or wallet address) so that
- * switching accounts gives each user their own independent follow list.
- */
+// tracks which trader addresses the user is following
+// state is kept at module level so it persists across screen navigations
+// each user gets their own storage slot so switching accounts works correctly
 
 import { useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_PREFIX } from '../config/api';
 import { apiRequest } from '../utils/apiClient';
 
-// Module-level state — persists across screen navigations within a session
 let _followingIds: string[] = [];
 let _userAddress: string | null = null;
-let _userId: string | null = null;           // email-auth user ID (UUID or email)
+let _userId: string | null = null;
 let _getJwt: (() => string | null) = () => null;
 let _onUnauthorized: () => Promise<void> = async () => {};
 let _loaded = false;
 let _listeners: Array<() => void> = [];
 
 function storageKey(): string {
-  // Use user ID if available, fall back to wallet address, then generic key
   const id = _userId ?? _userAddress ?? 'anonymous';
   return `@edgemarket/following_ids/${id}`;
 }
@@ -47,27 +41,20 @@ async function loadLocal() {
       }
     }
   } catch {
-    // storage unavailable — start with empty list
+    // storage unavailable - start empty
   }
 }
 
-/**
- * Called when the logged-in user changes (login / logout).
- * Resets in-memory state and reloads from the new user's storage slot.
- */
+// call this when the user logs in or out so each account has its own follow list
 export function setFollowingUserId(userId: string | null) {
-  if (_userId === userId) return; // no change
+  if (_userId === userId) return;
   _userId = userId;
-  // Reset state for the new user
   _followingIds = [];
   _loaded = false;
   notify();
-  if (userId) {
-    loadLocal(); // load new user's follows immediately
-  }
+  if (userId) loadLocal();
 }
 
-/** Called from ProfileScreen once a wallet address is known. */
 export function setFollowingUserAddress(address: string | null) {
   _userAddress = address;
 }
@@ -123,9 +110,5 @@ export function useFollowing() {
     }
   };
 
-  return {
-    followingIds: _followingIds,
-    toggleFollow,
-    syncFromServer,
-  };
+  return { followingIds: _followingIds, toggleFollow, syncFromServer };
 }

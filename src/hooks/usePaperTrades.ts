@@ -1,16 +1,8 @@
-/**
- * usePaperTrades — fetch the user's paper trading portfolio.
- *
- * Individual trades are copied via the Copy button on each PositionCard.
- * This hook is read-only — it fetches what has been explicitly copied.
- */
+// fetches the user's paper trading portfolio and polls every 60s for updates
+
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { API_PREFIX } from '../config/api';
 
-// Matches the backend's watcher.interval.ms default — how often the server
-// checks for newly-settled copied trades. Polling in-app at the same cadence
-// means a trade that just closed shows up (and gets called out) without
-// requiring the user to pull-to-refresh.
 const POLL_INTERVAL_MS = 60_000;
 
 export interface PaperTrade {
@@ -23,14 +15,11 @@ export interface PaperTrade {
   shares: number;
   livePrice: number | null;
   settled: boolean;
-  endDate: string | null;    // ISO date string — trade is settled if endDate < now
+  endDate: string | null;
   unrealisedPnl: number | null;
   pnlPercentage: number | null;
   createdAt: string;
-  /** True once the backend settlement watcher has frozen this trade's close
-   *  and (if a push token was on file) sent a "trade closed" notification. */
   notifiedClosed: boolean;
-  /** ISO timestamp of when the trade was detected as closed, or null if still open. */
   closedAt: string | null;
 }
 
@@ -51,14 +40,8 @@ export function usePaperTrades({ userAddress }: UsePaperTradesOptions) {
   const [portfolio, setPortfolio] = useState<PaperPortfolio | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  // Trades that transitioned from open -> settled on the most recent refresh.
-  // Consumers (e.g. PaperTradeCard) can use this to show a "trade just
-  // closed — WIN/LOSS $X" callout without waiting for a push notification.
   const [recentlyClosed, setRecentlyClosed] = useState<PaperTrade[]>([]);
 
-  // Remembers which trade IDs were already settled as of the last refresh,
-  // so we only flag *new* closes rather than re-flagging every settled
-  // trade on every poll.
   const seenSettledIds = useRef<Set<number>>(new Set());
   const hasLoadedOnce = useRef(false);
 
@@ -75,6 +58,7 @@ export function usePaperTrades({ userAddress }: UsePaperTradesOptions) {
       const data: PaperPortfolio = await res.json();
       setPortfolio(data);
 
+      // detect trades that just closed since last fetch
       const nowSettled = data.trades.filter((t) => t.settled);
       if (hasLoadedOnce.current) {
         const newlyClosed = nowSettled.filter((t) => !seenSettledIds.current.has(t.id));
@@ -91,12 +75,8 @@ export function usePaperTrades({ userAddress }: UsePaperTradesOptions) {
 
   const dismissRecentlyClosed = useCallback(() => setRecentlyClosed([]), []);
 
-  useEffect(() => {
-    refresh();
-  }, [refresh]);
+  useEffect(() => { refresh(); }, [refresh]);
 
-  // Poll so a copied trade's close (and its WIN/LOSS amount) surfaces
-  // in-app on its own, matching the backend settlement watcher's cadence.
   useEffect(() => {
     if (!userAddress) return;
     const id = setInterval(refresh, POLL_INTERVAL_MS);

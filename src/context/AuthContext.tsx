@@ -1,12 +1,12 @@
 import React, { createContext, useContext } from 'react';
 
 export interface CurrentUser {
-  id: string;           // UUID
+  id: string;
   email: string;
   emailVerified: boolean;
   walletAddress: string | null;
-  displayName?: string | null;   // from UserDto.displayName
-  loginCount?: number;           // from UserDto.loginCount
+  displayName?: string | null;
+  loginCount?: number;
   isPremium: boolean;
 }
 
@@ -27,10 +27,7 @@ export interface AuthContextValue {
 
 export const AuthContext = createContext<AuthContextValue | null>(null);
 
-/**
- * useAuth — access the email-auth context from any component.
- * Must be used inside <AuthProvider>.
- */
+// use this hook to access auth state from any screen
 export function useAuth(): AuthContextValue {
   const ctx = useContext(AuthContext);
   if (!ctx) throw new Error('useAuth must be used inside <AuthProvider>');

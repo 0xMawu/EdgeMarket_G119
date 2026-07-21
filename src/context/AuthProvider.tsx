@@ -5,6 +5,7 @@ import { API_PREFIX } from '../config/api';
 
 const JWT_KEY = '@edgemarket/email-jwt';
 
+// decode JWT expiry without verifying the signature
 function getJwtExp(token: string): number | null {
   try {
     const payload = JSON.parse(atob(token.split('.')[1]));
@@ -14,6 +15,7 @@ function getJwtExp(token: string): number | null {
   }
 }
 
+// fetch the current user profile from the server
 async function fetchCurrentUser(jwt: string): Promise<CurrentUser> {
   const res = await fetch(`${API_PREFIX}/auth/me`, {
     headers: { Authorization: `Bearer ${jwt}` },
@@ -36,9 +38,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Use both ref and state so getJwt() is always fresh (avoids stale closures)
+  // keep JWT in a ref so getJwt() always returns the latest value
   const jwtRef = useRef<string | null>(null);
-  const [, setJwtTick] = useState(0); // force re-render when jwt changes
+  const [, setJwtTick] = useState(0);
 
   const setJwt = useCallback((token: string | null) => {
     jwtRef.current = token;
@@ -47,7 +49,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const getJwt = useCallback((): string | null => jwtRef.current, []);
 
-  // ── Startup rehydration ────────────────────────────────────────────────────
+  // check for a saved JWT on startup
   useEffect(() => {
     AsyncStorage.getItem(JWT_KEY)
       .then(async (stored) => {
@@ -72,7 +74,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ── signup ─────────────────────────────────────────────────────────────────
   const signup = useCallback(async (email: string, password: string, name: string) => {
     setError(null);
     const res = await fetch(`${API_PREFIX}/auth/signup`, {
@@ -87,7 +88,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  // ── login ──────────────────────────────────────────────────────────────────
   const login = useCallback(async (email: string, password: string) => {
     setError(null);
     const res = await fetch(`${API_PREFIX}/auth/login`, {
@@ -111,7 +111,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setAuthState('authenticated');
   }, [setJwt]);
 
-  // ── verifyEmail ────────────────────────────────────────────────────────────
   const verifyEmail = useCallback(async (email: string, code: string) => {
     setError(null);
     const res = await fetch(`${API_PREFIX}/auth/verify-email`, {
@@ -128,7 +127,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setAuthState('authenticated');
   }, [setJwt]);
 
-  // ── resendCode ─────────────────────────────────────────────────────────────
   const resendCode = useCallback(async (email: string) => {
     setError(null);
     const res = await fetch(`${API_PREFIX}/auth/resend-code`, {
@@ -143,7 +141,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  // ── logout ─────────────────────────────────────────────────────────────────
   const logout = useCallback(async () => {
     await AsyncStorage.removeItem(JWT_KEY);
     setJwt(null);
@@ -151,7 +148,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setAuthState('unauthenticated');
   }, [setJwt]);
 
-  // re-fetches the current user from the server - call this after payment
+  // re-fetch user profile from server - used after payment to update isPremium
   const refreshUser = useCallback(async () => {
     const jwt = getJwt();
     if (!jwt) return;
@@ -159,7 +156,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const user = await fetchCurrentUser(jwt);
       setCurrentUser(user);
     } catch {
-      // if it fails just leave the current state as-is
+      // leave current state as-is if the request fails
     }
   }, [getJwt]);
 
